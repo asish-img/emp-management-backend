@@ -1,33 +1,37 @@
 const Employee = require("../../models/employee.model");
 var { isEmpty } = require("lodash");
 const moment = require("moment");
-
+const changesForJoining = (
+  joining_date,
+  internship_period,
+  training_period
+) => {
+  const training_start_date = moment(joining_date, ["YYYY-MM-DD"]);
+  const training_end_date = moment(joining_date).add(training_period, "days");
+  const internship_start_date = training_period
+    ? moment(training_end_date).add(1, "days")
+    : training_end_date;
+  const internship_end_date = moment(internship_start_date).add(
+    internship_period,
+    "days"
+  );
+  const job_start_date = internship_period
+    ? moment(internship_end_date).add(1, "days")
+    : internship_end_date;
+  return {
+    training_start_date,
+    training_end_date,
+    internship_start_date,
+    internship_end_date,
+    job_start_date,
+  };
+};
 module.exports = {
   list_employee: async (req, res) => {
     const finaldata = await Employee.find({});
     return res.json(finaldata);
   },
-  changesForJoining: (joining_date, internship_period) => {
-    const training_start_date = moment(joining_date, ["YYYY-MM-DD"]);
-    const training_end_date = moment(joining_date).add(training_period, "days");
-    const internship_start_date = training_period
-      ? moment(training_end_date).add(1, "days")
-      : training_end_date;
-    const internship_end_date = moment(internship_start_date).add(
-      internship_period,
-      "days"
-    );
-    const job_start_date = internship_period
-      ? moment(internship_end_date).add(1, "days")
-      : internship_end_date;
-    return {
-      training_start_date,
-      training_end_date,
-      internship_start_date,
-      internship_end_date,
-      job_start_date,
-    };
-  },
+
   add_employee: async (req, res) => {
     const {
       name,
@@ -57,7 +61,7 @@ module.exports = {
         internship_start_date,
         internship_end_date,
         job_start_date,
-      } = this.changesForJoining(joining_date, internship_period);
+      } = changesForJoining(joining_date, internship_period, training_period);
 
       const employee = await Employee.create({
         name,
