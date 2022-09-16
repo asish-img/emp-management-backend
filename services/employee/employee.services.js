@@ -7,6 +7,27 @@ module.exports = {
     const finaldata = await Employee.find({});
     return res.json(finaldata);
   },
+  changesForJoining: (joining_date, internship_period) => {
+    const training_start_date = moment(joining_date, ["YYYY-MM-DD"]);
+    const training_end_date = moment(joining_date).add(training_period, "days");
+    const internship_start_date = training_period
+      ? moment(training_end_date).add(1, "days")
+      : training_end_date;
+    const internship_end_date = moment(internship_start_date).add(
+      internship_period,
+      "days"
+    );
+    const job_start_date = internship_period
+      ? moment(internship_end_date).add(1, "days")
+      : internship_end_date;
+    return {
+      training_start_date,
+      training_end_date,
+      internship_start_date,
+      internship_end_date,
+      job_start_date,
+    };
+  },
   add_employee: async (req, res) => {
     const {
       name,
@@ -30,22 +51,13 @@ module.exports = {
       internship_period,
       joining_date)
     ) {
-      console.log(joining_date);
-      const training_start_date = moment(joining_date);
-      const training_end_date = moment(joining_date).add(
-        training_period,
-        "days"
-      );
-      const internship_start_date = training_period
-        ? moment(training_end_date).add(1, "days")
-        : training_end_date;
-      const internship_end_date = moment(internship_start_date).add(
-        internship_period,
-        "days"
-      );
-      const job_start_date = internship_period
-        ? moment(internship_end_date).add(1, "days")
-        : internship_end_date;
+      const {
+        training_start_date,
+        training_end_date,
+        internship_start_date,
+        internship_end_date,
+        job_start_date,
+      } = this.changesForJoining(joining_date, internship_period);
 
       const employee = await Employee.create({
         name,
@@ -56,7 +68,7 @@ module.exports = {
         employee_type,
         training_period,
         internship_period,
-        joining_date,
+        joining_date: moment(joining_date, ["YYYY-MM-DD"]),
         training_start_date,
         training_end_date,
         internship_start_date,
@@ -69,13 +81,16 @@ module.exports = {
     }
   },
   edit_employee: async (req, res) => {
-    const { id, name, age } = req.body;
+    const { id, name, age, joining_date } = req.body;
     const updateToBe = {};
     if (name) {
       updateToBe["name"] = name;
     }
     if (age) {
       updateToBe["age"] = age;
+    }
+    if (joining_date) {
+      updateToBe["joining_date"] = joining_date;
     }
 
     if (id) {
